@@ -2,6 +2,10 @@ import random
 import math
 from typing import Tuple
 
+import tkinter as tk
+from tkinter import ttk
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # POP_SIZE = 20
 # INTERVAL = (-1, 2)
@@ -250,8 +254,30 @@ class GeneticAlgorithmForMaximization:
 
 
 algoritm = GeneticAlgorithmForMaximization(
-    20, (-1, 2), (-1, 1, 2), 6, 25, 1, 50
+    20, (-1, 2), (-1, 1, 2), 6, 40, 1, 50
 )
 
 bestFitnessValues = algoritm.RunAlgorithm()
 print(f"Fitness maxim pe parcursul generatiilor: {bestFitnessValues}")
+
+root = tk.Tk()
+root.title("Evoluția Algoritmului Genetic")
+
+
+fig = plt.Figure(figsize=(6, 4), dpi=100)
+ax = fig.add_subplot(111)
+ax.plot(range(1, len(bestFitnessValues) + 1), bestFitnessValues, label='Max Fitness', color='blue')
+ax.set_xlabel('Generație')
+ax.set_ylabel('Fitness')
+ax.set_title('Evoluția Fitnessului pe parcursul Generațiilor')
+ax.legend()
+
+canvas = FigureCanvasTkAgg(fig, master=root)
+canvas.draw()
+
+canvas.get_tk_widget().pack()
+
+button_exit = ttk.Button(root, text="Închide", command=root.quit)
+button_exit.pack()
+
+root.mainloop()
