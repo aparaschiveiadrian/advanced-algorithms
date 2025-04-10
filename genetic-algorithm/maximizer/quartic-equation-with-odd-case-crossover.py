@@ -18,7 +18,7 @@ class GeneticAlgorithmForMaximization:
     def __init__(self,
                  populationSize: int,
                  domain: Tuple[float, float],
-                 parameters: Tuple[float, float, float],
+                 parameters: Tuple[float, float, float, float],
                  precision: int,
                  probCrossover: int,
                  probMutation: int,
@@ -59,9 +59,12 @@ class GeneticAlgorithmForMaximization:
         # valoare nuemrica
         number = self.ChromosomeToNumber(chromosome, self.domain)
 
-        ecuationRes = self.parameters[0] * number ** 2 + self.parameters[1] * number + self.parameters[2]
+        #ecuationRes = self.parameters[0] * number ** 2 + self.parameters[1] * number + self.parameters[2]
+        #ecuationRes = (number * self.parameters[0] ** 4) + (4 * self.parameters[1] ** 2) + (self.parameters[2] * 2) + 4
 
-        return ecuationRes
+        return -number ** 4 + 4 * number ** 2 + 2 * number + 4
+
+        #return ecuationRes
 
     def PopulationAfterFitness(self):
         fitnessValues = [self.FitnessFunction(x) for x in self.population]
@@ -108,27 +111,57 @@ class GeneticAlgorithmForMaximization:
 
     def Crossover(self, population):
         new_population = []
-        i = 0
 
-        while i < self.populationSize - 1:
-            parent1 = population[i]
-            parent2 = population[i + 1]
+        if self.populationSize % 2 == 0:
+            i = 0
+            while i < self.populationSize - 1:
+                parent1 = population[i]
+                parent2 = population[i + 1]
 
-            #recombinare
-            if random.random() < self.probCrossover / 100:
-                cut = random.randint(1, self.chromosomeLength - 1)
-                child1 = parent1[:cut] + parent2[cut:]
-                child2 = parent2[:cut] + parent1[cut:]
+                if random.random() < self.probCrossover / 100:
+                    cut = random.randint(1, self.chromosomeLength - 1)
+                    child1 = parent1[:cut] + parent2[cut:]
+                    child2 = parent2[:cut] + parent1[cut:]
+                else:
+                    child1 = parent1
+                    child2 = parent2
 
-            else:
-                child1 = parent1
-                child2 = parent2
+                new_population.extend([child1, child2])
+                i += 2
 
-            new_population.extend([child1, child2])
-            i += 2
+        else:
+            i = 0
+            while i < self.populationSize - 3:
+                parent1 = population[i]
+                parent2 = population[i + 1]
 
-        if self.populationSize % 2 == 1:
-            new_population.append(population[-1])
+                if random.random() < self.probCrossover / 100:
+                    cut = random.randint(1, self.chromosomeLength - 1)
+                    child1 = parent1[:cut] + parent2[cut:]
+                    child2 = parent2[:cut] + parent1[cut:]
+                else:
+                    child1 = parent1
+                    child2 = parent2
+
+                new_population.extend([child1, child2])
+                i += 2
+
+            p1 = population[-3]
+            p2 = population[-2]
+            p3 = population[-1]
+
+            def cross_last(a, b):
+                if random.random() < self.probCrossover / 100:
+                    cut = random.randint(1, self.chromosomeLength - 1)
+                    return a[:cut] + b[cut:]
+                else:
+                    return a
+
+            c1 = cross_last(p1, p2)
+            c2 = cross_last(p2, p3)
+            c3 = cross_last(p3, p1)
+
+            new_population.extend([c1, c2, c3])
 
         return new_population
 
@@ -157,7 +190,7 @@ class GeneticAlgorithmForMaximization:
         bestFitnessValues = []
         with open("Evolutie.txt", "w") as file:
             file.write(
-                f"Pentru functia ax^2 + bx + c, unde a={self.parameters[0]} b={self.parameters[1]} c={self.parameters[2]}\n"
+                f"Pentru functia -x^4 + 4x^2 +2x +4\n"
                 f"domeniul[{self.domain[0]},{self.domain[1]}], "
                 f"dimensiunea populatiei: {self.populationSize}, "
                 f"precizia: {self.precision}, "
@@ -201,23 +234,67 @@ class GeneticAlgorithmForMaximization:
             new_population = []
 
             file.write("\nRecombinarile:\n")
-            for i in range(0, len(firstSelection) - 1, 2):
-                parent1 = firstSelection[i]
-                parent2 = firstSelection[i + 1]
+            if self.populationSize % 2 == 0:
+                for i in range(0, len(firstSelection) - 1, 2):
+                    parent1 = firstSelection[i]
+                    parent2 = firstSelection[i + 1]
+                    if random.random() < self.probCrossover / 100:
+                        cut = random.randint(1, self.chromosomeLength - 1)
+                        child1 = parent1[:cut] + parent2[cut:]
+                        child2 = parent2[:cut] + parent1[cut:]
+                        file.write(f"Recombinare intre {parent1} si {parent2} la pozitia {cut}: {child1}, {child2}\n")
+                    else:
+                        child1 = parent1
+                        child2 = parent2
+                        file.write(f"Fara recombinare intre {parent1} si {parent2}\n")
+                    new_population.extend([child1, child2])
+            elif self.populationSize % 2 == 1:
+                for i in range(0, len(firstSelection) - 3, 2):
+                    parent1 = firstSelection[i]
+                    parent2 = firstSelection[i + 1]
+                    if random.random() < self.probCrossover / 100:
+                        cut = random.randint(1, self.chromosomeLength - 1)
+                        child1 = parent1[:cut] + parent2[cut:]
+                        child2 = parent2[:cut] + parent1[cut:]
+                        file.write(f"Recombinare intre {parent1} si {parent2} la pozitia {cut}: {child1}, {child2}\n")
+                    else:
+                        child1 = parent1
+                        child2 = parent2
+                        file.write(f"Fara recombinare intre {parent1} si {parent2}\n")
+
+                    new_population.extend([child1, child2])
+
+                p1 = firstSelection[-3]
+                p2 = firstSelection[-2]
+                p3 = firstSelection[-1]
+
                 if random.random() < self.probCrossover / 100:
                     cut = random.randint(1, self.chromosomeLength - 1)
-                    child1 = parent1[:cut] + parent2[cut:]
-                    child2 = parent2[:cut] + parent1[cut:]
-                    file.write(f"Recombinare intre {parent1} si {parent2} la pozitia {cut}: {child1}, {child2}\n")
+                    c1 = p1[:cut] + p2[cut:]
+                    file.write(f"Recombinare intre {p1} si {p2} la pozitia {cut}: {c1}\n")
                 else:
-                    child1 = parent1
-                    child2 = parent2
-                    file.write(f"Fara recombinare intre {parent1} si {parent2}\n")
-                new_population.extend([child1, child2])
+                    c1 = p1
+                    file.write(f"Fara recombinare intre {p1} si {p2}, aflati in ultimii 3\n")
 
-            # ultimul individ
-            if len(firstSelection) % 2 == 1:
-                new_population.append(firstSelection[-1])
+                if random.random() < self.probCrossover / 100:
+                    cut = random.randint(1, self.chromosomeLength - 1)
+                    c2 = p2[:cut] + p3[cut:]
+                    file.write(f"Recombinare intre {p2} si {p3} la pozitia {cut}: {c2}\n")
+                else:
+                    c2 = p2
+                    file.write(f"Fara recombinare intre {p2} si {p3}, aflati in ultimii 3\n")
+
+                if random.random() < self.probCrossover / 100:
+                    cut = random.randint(1, self.chromosomeLength - 1)
+                    c3 = p3[:cut] + p1[cut:]
+                    file.write(f"Recombinare intre {p3} si {p1} la pozitia {cut}: {c3}\n")
+                else:
+                    c3 = p3
+                    file.write(f"Fara recombinare intre {p3} si {p1}, aflati in ultimii 3\n")
+                new_population.extend([c1, c2, c3])
+                # # ultimul individ
+                # if len(firstSelection) % 2 == 1:
+                #     new_population.append(firstSelection[-1])
 
             # afisare dupa recombinare
             file.write("\nPopulatia dupa recombinare:\n")
@@ -254,22 +331,22 @@ class GeneticAlgorithmForMaximization:
 
 
 algoritm = GeneticAlgorithmForMaximization(
-    20, (-1, 2), (-1, 1, 2), 6, 40, 1, 50
+    21, (-2, 2.3), (-1, 4, 2, 4), 6, 40, 10, 50
 )
 
 bestFitnessValues = algoritm.RunAlgorithm()
 print(f"Fitness maxim pe parcursul generatiilor: {bestFitnessValues}")
 
 root = tk.Tk()
-root.title("Evoluția Algoritmului Genetic")
+root.title("Evolutia Algoritmului Genetic")
 
 
 fig = plt.Figure(figsize=(6, 4), dpi=100)
 ax = fig.add_subplot(111)
 ax.plot(range(1, len(bestFitnessValues) + 1), bestFitnessValues, label='Max Fitness', color='blue')
-ax.set_xlabel('Generație')
+ax.set_xlabel('Generatie')
 ax.set_ylabel('Fitness')
-ax.set_title('Evoluția Fitnessului pe parcursul Generațiilor')
+ax.set_title('Evolutia Fitnessului pe parcursul Generatiilor')
 ax.legend()
 
 canvas = FigureCanvasTkAgg(fig, master=root)
@@ -277,7 +354,7 @@ canvas.draw()
 
 canvas.get_tk_widget().pack()
 
-button_exit = ttk.Button(root, text="Închide", command=root.quit)
+button_exit = ttk.Button(root, text="Inchide", command=root.quit)
 button_exit.pack()
 
 root.mainloop()
